@@ -1,57 +1,85 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.prompts import PromptTemplate
-# from app import llm
+from langchain.chains import LLMChain
+
+
+from app import llm
 
 loader = PyPDFLoader("./raghav_vinayak_dadhich.pdf")
 pages = loader.load()
-print(pages[0].page_content)
+text=pages[0].page_content
 
-PROFILE_PROMPT_TEMPLATE="""From the Resume text for a job aspirant below, extract Entities strictly as instructed below.
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+text_splitter=RecursiveCharacterTextSplitter(chunk_size=600,chunk_overlap=90)
+docs=text_splitter.split_documents(pages)
+
+
+PROFILE_PROMPT_TEMPLATE="""
+From the Resume text provided for a job aspirant, extract the Entity as instructed below.
 Instructions:
-1. First, look for the Person Entity type in the text and extract the needed information defined below:
-    Extract the details from the given text based on the mention entity types.
-    Entity Types:
-    label:'Person',role:string,description:string
-    label: 'Skills',  'names':string
-    label: 'Education', 'Name':string, 'Duration':string
-    label: 'Projects', 'Title':string, 'Description':string 
-    label: 'Position', 'Company':string, 'Duration':string,'roles':string
+1. Extract the name of the person, description of the person, relevant social media links for the person.
 
-    For the above entity types, make sure of the following:
-    1. For the label Position, Duration is given as string, but try to calculate the difference of the (dates/years/months).
-    
-2. Description property should be a crisp text summary and MUST NOT be more than 60 characters
-3. If you cannot find any information on the entities above, it is okay to return empty value. DO NOT create fictious data.
-4. Do NOT create duplicate entities
-5. Restrict yourself to the above Person, Position, Company, Education and Skill information.
-6. NEVER Impute missing values
-
-Question: Now, extract the Person details for the text below -
+The Description SHOULD NOT exceed more than 30 words.
+Question: Now, extract the Person description for the text below -
 {text}
-
 Answer:
 """
 
-res="""Example Output JSON:
-{"entities": [{"label":"Person","id":"person1","role":"Prompt Developer","description":"Prompt Developer with more than 30 years of LLM experience"}]}
+SKILLS_PROMPT_TEMPLATE="""
+From the Resume text provided for a job aspirant, extract the Entity as instructed below.
+Instructions:
+1. Extract the relevant  technical and personal skills from the text that would help the person get a job.
+
+Question: Now, extract the Skill details for the text below -
+{text}
+Answer:
 """
 
-# prompt_template = PromptTemplate.from_template(PROFILE_PROMPT_TEMPLATE)
-# prompt_template.format(text=pages[0].page_content)
+COMPANIES_PROMPT_TEMPLATE="""
+From the Resume text provided for a job aspirant, extract the Entity as instructed below.
+Instructions:
+1. Extract the companies the person has worked, the role of the person and time/year the person has worked for in from the text.
+Question: Now, extract the Company details for the text below -
+{text}
+Answer:
+"""
+
+EDUCATION_PROMPT_TEMPLATE="""
+From the Resume text provided for a job aspirant, extract the Entity as instructed below.
+Instructions:
+1. Extract the Education level the person has , Name of the school or college, Percentage/Marks/GPA achieved in the respective college, year of school/college.
+Question: Now, extract the Educational details of the person for the text below -
+{text}
+Answer:
+"""
+
+PROJECT_PROMPT_TEMPLATE="""
+From the Resume text provided for a job aspirant, extract the Entity as instructed below.
+Instructions:
+1. Extract the  Title of the Projects the person has worked on and give the description of the project in NOT MORE THAN 30 words.
+Question: Now, extract the Project details for the text below -
+{text}
+Answer:
+"""
+
+def get_entities(template):
+    prompt=PromptTemplate(
+        input_variables=['text'],template=template
+    )
+
+    llm_chain=LLMChain(llm=llm,prompt=prompt)
+    res=llm_chain({"text":text})
+    return res
+
+entities=[PROFILE_PROMPT_TEMPLATE,SKILLS_PROMPT_TEMPLATE,COMPANIES_PROMPT_TEMPLATE,EDUCATION_PROMPT_TEMPLATE,PROJECT_PROMPT_TEMPLATE]
+
+results={"profile":"","skills":"","companies":"","education":"","project":""}
 
 
+results['profile']=get_entities(entities[0])
 
-query=""
-# prompt = f"""
-#  <|system|>
-# You are an AI assistant that follows instruction extremely well.
-# Please be truthful and give direct answers
-# </s>
-#  <|user|>
-#  {query}
-#  </s>
-#  <|assistant|>
-# """
+for res,entity in zip(results.items(),entities):
+    results[res[0]]=get_entities(entity)['text'].split("\nAnswer")[1]
 
-# response = llm.predict(prompt_template)
-# print(response)
+
+print(results)
