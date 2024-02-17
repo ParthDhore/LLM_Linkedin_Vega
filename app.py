@@ -1,4 +1,4 @@
-from langchain.llms.huggingface_hub import HuggingFaceHub
+from langchain_community.llms import HuggingFaceHub
 import os
 from dotenv import load_dotenv
 
@@ -23,5 +23,5 @@ Please be truthful and give direct answers
  <|assistant|>
 """
 
-response = llm.predict(prompt)
+response = llm.predict(query)
 print(response)
