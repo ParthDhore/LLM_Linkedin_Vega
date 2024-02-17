@@ -12,16 +12,16 @@ llm = HuggingFaceHub(
 
 query = "What is langchain?"
 
-# prompt = f"""
-#  <|system|>
-# You are an AI assistant that follows instruction extremely well.
-# Please be truthful and give direct answers
-# </s>
-#  <|user|>
-#  {query}
-#  </s>
-#  <|assistant|>
-# """
+prompt = f"""
+ <|system|>
+You are an AI assistant that follows instruction extremely well.
+Please be truthful and give direct answers
+</s>
+ <|user|>
+ {query}
+ </s>
+ <|assistant|>
+"""
 
-response = llm.predict(query)
+response = llm.predict(prompt)
 print(response)
