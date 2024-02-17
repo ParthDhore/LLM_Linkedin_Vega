@@ -1,6 +1,5 @@
 from langchain.llms.huggingface_hub import HuggingFaceHub
 import os
-from getpass import getpass
 from dotenv import load_dotenv
 
 
