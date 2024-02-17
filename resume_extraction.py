@@ -9,9 +9,7 @@ loader = PyPDFLoader("./raghav_vinayak_dadhich.pdf")
 pages = loader.load()
 text=pages[0].page_content
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-text_splitter=RecursiveCharacterTextSplitter(chunk_size=600,chunk_overlap=90)
-docs=text_splitter.split_documents(pages)
+
 
 
 PROFILE_PROMPT_TEMPLATE="""
